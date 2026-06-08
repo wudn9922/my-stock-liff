@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的專屬量化清單</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; margin-top: 20px; }
+        img { border-radius: 50%; width: 80px; height: 80px; margin-bottom: 10px; }
+        code { background: #eee; padding: 5px; border-radius: 4px; color: #d63384; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h2>👋 歡迎來到專屬看盤室</h2>
+    
+    <div class="card" id="profile-card">
+        <p>🔄 正在與 LINE 連線中...</p>
+    </div>
+
+    <script>
+        # ⚠️ 請把下面引號內的文字，替換成你剛剛在 LINE 後台複製的 LIFF ID ⚠️
+        const LIFF_ID = "2010330411-SbwvRXRN";
+
+        async function initializeLiff() {
+            try {
+                // 2. 啟動 LINE LIFF 偵測
+                await liff.init({ liffId: LIFF_ID });
+                
+                // 3. 檢查使用者是不是已經登入 LINE 了
+                if (liff.isLoggedIn()) {
+                    // 4. 拿取使用者的 LINE 資料（大頭貼、名字、User ID）
+                    const profile = await liff.getProfile();
+                    
+                    // 5. 把資料漂亮地顯示在網頁畫面上
+                    document.getElementById("profile-card").innerHTML = `
+                        <img src="${profile.pictureUrl}" alt="大頭貼">
+                        <h3>你好，${profile.displayName}！</h3>
+                        <p>你的專屬 LINE ID 識別碼：</p>
+                        <p><code>${profile.userId}</code></p>
+                        <hr>
+                        <p style="color:gray; font-size:12px;">
+                            ✅ 進度一成功！網頁已經成功認得你了！
+                        </p>
+                    `;
+                } else {
+                    // 如果是用一般瀏覽器打開且還沒登入，就跳出 LINE 登入畫面
+                    liff.login();
+                }
+            } catch (err) {
+                console.error("初始化失敗：", err);
+                document.getElementById("profile-card").innerHTML = "<p>❌ LINE 連線失敗，請檢查 LIFF ID 是否正確。</p>";
+            }
+        }
+
+        // 網頁一打開，立刻執行上面的連線程式
+        window.onload = initializeLiff;
+    </script>
+
+</body>
+</html>
