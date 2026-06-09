@@ -6,56 +6,108 @@
     <title>我的專屬量化清單</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; margin-top: 20px; }
-        img { border-radius: 50%; width: 80px; height: 80px; margin-bottom: 10px; }
-        code { background: #eee; padding: 5px; border-radius: 4px; color: #d63384; font-weight: bold; }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; margin: 10px; min-width: 300px; vertical-align: top; }
+        img { border-radius: 50%; width: 60px; height: 60px; margin-bottom: 10px; }
+        code { background: #eee; padding: 3px 6px; border-radius: 4px; color: #d63384; font-size: 14px; }
+        
+        /* 🔵 新增：輸入框與按鈕的樣式 */
+        .form-group { margin: 15px 0; text-align: left; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        .form-group input { width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        .btn { background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn:hover { background-color: #218838; }
+        
+        /* 🔵 新增：表格樣式 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background-color: #007bff; color: white; }
     </style>
 </head>
 <body>
 
-    <h2>👋 歡迎來到專屬看盤室</h2>
+    <h2>📊 我的專屬量化看盤室</h2>
     
     <div class="card" id="profile-card">
         <p>🔄 正在與 LINE 連線中...</p>
     </div>
 
+    <div class="card">
+        <h3>➕ 新增觀察股票</h3>
+        <div class="form-group">
+            <label>股票代碼 (台股請加 .TW)</label>
+            <input type="text" id="ticker-input" placeholder="例如: 2330.TW 或 NVDA">
+        </div>
+        <div class="form-group">
+            <label>短期均線天數 (MA 1)</label>
+            <input type="number" id="ma1-input" value="20">
+        </div>
+        <div class="form-group">
+            <label>長期均線天數 (MA 2)</label>
+            <input type="number" id="ma2-input" value="60">
+        </div>
+        <button class="btn" onclick="addStock()">加入我的清單</button>
+    </div>
+
+    <br>
+
+    <div class="card" style="width: 90%; max-width: 600px;">
+        <h3>📋 我的自訂觀察清單</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>股票代碼</th>
+                    <th>目前價格</th>
+                    <th>短均狀態</th>
+                    <th>長均狀態</th>
+                    <th>多空判定</th>
+                </tr>
+            </thead>
+            <tbody id="stock-table-body">
+                <tr>
+                    <td colspan="5" style="color: gray;">目前清單空空如也，請從上方新增股票</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
     <script>
-        // ⚠️ 請把下面引號內的文字，替換成你剛剛在 LINE 後台複製的 LIFF ID ⚠️
+        // ⚠️ 記得把下方換成你的真實 LIFF ID ⚠️
         const LIFF_ID = "2010330411-SbwvRXRN";
 
         async function initializeLiff() {
             try {
-                // 2. 啟動 LINE LIFF 偵測
                 await liff.init({ liffId: LIFF_ID });
-                
-                // 3. 檢查使用者是不是已經登入 LINE 了
                 if (liff.isLoggedIn()) {
-                    // 4. 拿取使用者的 LINE 資料（大頭貼、名字、User ID）
                     const profile = await liff.getProfile();
-                    
-                    // 5. 把資料漂亮地顯示在網頁畫面上
                     document.getElementById("profile-card").innerHTML = `
                         <img src="${profile.pictureUrl}" alt="大頭貼">
-                        <h3>你好，${profile.displayName}！</h3>
-                        <p>你的專屬 LINE ID 識別碼：</p>
-                        <p><code>${profile.userId}</code></p>
-                        <hr>
-                        <p style="color:gray; font-size:12px;">
-                            ✅ 進度一成功！網頁已經成功認得你了！
-                        </p>
+                        <h4>你好，${profile.displayName}</h4>
+                        <p style="font-size:12px; color:gray; margin:0;">ID: <code>${profile.userId.substring(0, 8)}...</code></p>
                     `;
                 } else {
-                    // 如果是用一般瀏覽器打開且還沒登入，就跳出 LINE 登入畫面
                     liff.login();
                 }
             } catch (err) {
                 console.error("初始化失敗：", err);
-                document.getElementById("profile-card").innerHTML = "<p>❌ LINE 連線失敗，請檢查 LIFF ID 是否正確。</p>";
+                document.getElementById("profile-card").innerHTML = "<p>❌ LINE 連線失敗</p>";
             }
         }
 
-        // 網頁一打開，立刻執行上面的連線程式
+        // 🟢 新增：按下按鈕時觸發的動作（暫時先跳出通知）
+        function addStock() {
+            const ticker = document.getElementById("ticker-input").value;
+            const ma1 = document.getElementById("ma1-input").value;
+            const ma2 = document.getElementById("ma2-input").value;
+            
+            if(!ticker) {
+                alert("請輸入股票代碼！");
+                return;
+            }
+            
+            alert(`成功點擊！你想要把 ${ticker} 加進清單，並計算 ${ma1}MA 與 ${ma2}MA。`);
+        }
+
         window.onload = initializeLiff;
     </script>
 
